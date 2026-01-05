@@ -23,13 +23,9 @@ private:
             nelem++;
             return new BSNode<T>(e);
         }
-        if (n->elem < e) {
-            n->right = insert(n->right, e);
-        } else if (n->elem > e) {
-            n->left = insert(n->left, e);
-        } else {
-            throw std::runtime_error("BSTree::insert: element already exists");
-        }
+        if (n->elem < e) n->right = insert(n->right, e);
+        else if (n->elem > e) n->left = insert(n->left, e);
+        else throw std::runtime_error("BSTree::insert: element already exists");
         return n;
     }
 
@@ -49,10 +45,10 @@ private:
     BSNode<T>* remove_max(BSNode<T>* n) {
         if (n == nullptr) return nullptr;
         if (n->right == nullptr) {
-            BSNode<T>* left = n->left;
+            BSNode<T>* l = n->left;
             delete n;
             nelem--;
-            return left;
+            return l;
         }
         n->right = remove_max(n->right);
         return n;
@@ -70,26 +66,22 @@ private:
             return n;
         }
 
+        // encontrado
         if (n->left == nullptr && n->right == nullptr) {
-            delete n;
-            nelem--;
-            return nullptr;
+            delete n; nelem--; return nullptr;
         }
         if (n->left == nullptr) {
             BSNode<T>* r = n->right;
-            delete n;
-            nelem--;
-            return r;
+            delete n; nelem--; return r;
         }
         if (n->right == nullptr) {
             BSNode<T>* l = n->left;
-            delete n;
-            nelem--;
-            return l;
+            delete n; nelem--; return l;
         }
 
-        T pred = max(n->left);
-        n->elem = pred;
+        // dos hijos: reemplazar por máximo del subárbol izquierdo
+        T m = max(n->left);
+        n->elem = m;
         n->left = remove_max(n->left);
         return n;
     }
@@ -104,20 +96,29 @@ private:
 public:
     BSTree() : nelem(0), root(nullptr) {}
 
+    ~BSTree() {
+        delete_cascade(root);
+        root = nullptr;
+        nelem = 0;
+    }
+
     int size() const { return nelem; }
 
     T search(T e) const {
-        BSNode<T>* n = search(root, e);
-        return n->elem;
+        return search(root, e)->elem;
     }
 
-    T operator[](T e) const { return search(e); }
+    T operator[](T e) const {
+        return search(e);
+    }
 
-    void insert(T e) { root = insert(root, e); }
+    void insert(T e) {
+        root = insert(root, e);
+    }
 
-    void remove(T e) { root = remove(root, e); }
-
-    ~BSTree() { delete_cascade(root); }
+    void remove(T e) {
+        root = remove(root, e);
+    }
 
     friend std::ostream& operator<<(std::ostream& out, const BSTree<T>& bst) {
         bst.print_inorder(out, bst.root);
